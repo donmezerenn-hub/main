@@ -2,68 +2,337 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Karbon Ayak İzi Hesaplayıcı</title>
+<!-- html2canvas kütüphanesi - Ekran görüntüsü almak için -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <style>
-:root{
-  --bg:#f4f7f5; --card:#ffffff; --border:#dfe6e2; --text:#1c2b23; --muted:#5c6b63;
-  --accent:#1f7a52; --accent-dark:#155a3c; --danger:#c1443a; --amber:#b8860b;
+/* Doğa ve Toprak Renkleri */
+:root {
+  --bg: #f9f8f4;
+  --card: #ffffff;
+  --border: #e6e4dc;
+  --text: #2d332f;
+  --muted: #737a76;
+  --accent: #3a5a40;
+  --accent-dark: #243828;
+  --accent-light: #a3b18a;
+  --highlight: #bc6c25;
+  --danger: #ab4e4e;
+  --shadow: rgba(58, 90, 64, 0.08);
 }
-@media (prefers-color-scheme: dark){
-  :root{ --bg:#101512; --card:#182019; --border:#2b352e; --text:#e7ece9; --muted:#9fada4; --accent:#3fae7f; --accent-dark:#2c8863; }
+
+@media (prefers-color-scheme: dark) {
+  :root { 
+    --bg: #1c211e; 
+    --card: #242a26; 
+    --border: #38423c; 
+    --text: #e8eae9; 
+    --muted: #9ba39e; 
+    --accent: #52795c; 
+    --accent-dark: #3a5a40; 
+    --accent-light: #2c4231;
+    --highlight: #d48b4b;
+    --shadow: rgba(0, 0, 0, 0.2);
+  }
 }
-*{box-sizing:border-box;}
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
-.wrap{max-width:760px;margin:0 auto;padding:28px 16px 60px;}
-h1{font-size:22px;font-weight:600;margin:0 0 4px;}
-.sub{color:var(--muted);font-size:14px;margin:0 0 24px;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:18px;}
-.card h2{font-size:16px;margin:0 0 14px;font-weight:600;}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
-label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px;}
-input,select{width:100%;height:38px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);padding:0 10px;font-size:14px;}
-input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;}
-button{cursor:pointer;border:none;border-radius:8px;font-size:14px;font-weight:600;padding:10px 16px;}
-.btn-primary{background:var(--accent);color:#fff;width:100%;margin-top:6px;}
-.btn-primary:hover{background:var(--accent-dark);}
-.err{color:var(--danger);font-size:12px;margin-top:4px;display:none;}
-.result{display:none;text-align:center;padding:18px 0 4px;}
-.result .num{font-size:38px;font-weight:700;color:var(--accent);}
-.result .lbl{color:var(--muted);font-size:13px;margin-top:2px;}
-.breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px;}
-.bd{background:var(--bg);border-radius:8px;padding:8px;text-align:center;}
-.bd .v{font-weight:600;font-size:14px;}
-.bd .k{font-size:11px;color:var(--muted);margin-top:2px;}
-table{width:100%;border-collapse:collapse;font-size:14px;}
-th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border);}
-th{color:var(--muted);font-weight:500;font-size:12px;}
-.rank{font-weight:600;width:28px;}
-.note{font-size:12px;color:var(--muted);margin-top:10px;}
-.tabs{display:flex;gap:6px;margin-bottom:16px;}
-.tab{flex:1;text-align:center;padding:8px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:500;}
-.tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.wrap {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+  color: var(--accent);
+}
+
+.sub {
+  color: var(--muted);
+  font-size: 15px;
+  margin: 0 0 32px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 30px var(--shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card h2 {
+  font-size: 18px;
+  margin: 0 0 20px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+input, select {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 0 14px;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--card);
+  box-shadow: 0 0 0 3px rgba(58, 90, 64, 0.15);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 14px 20px;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  width: 100%;
+  margin-top: 10px;
+  box-shadow: 0 4px 12px rgba(58, 90, 64, 0.2);
+}
+
+.btn-primary:hover {
+  background: var(--accent-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(58, 90, 64, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  width: 100%;
+  margin-top: 16px;
+}
+
+.btn-secondary:hover {
+  background: rgba(58, 90, 64, 0.05);
+}
+
+.err {
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: 6px;
+  display: none;
+  background: rgba(171, 78, 78, 0.1);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.result {
+  display: none;
+  text-align: center;
+  padding: 24px 0 8px;
+  border-top: 1px dashed var(--border);
+  margin-top: 24px;
+}
+
+.result.show {
+  display: block;
+  animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Fatura İndirme Alanı İçin Özel Konteyner */
+#invoiceArea {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.result .num {
+  font-size: 42px;
+  font-weight: 800;
+  color: var(--highlight);
+  letter-spacing: -1px;
+}
+
+.result .lbl {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.breakdown {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.bd {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 16px 12px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.bd .v {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.bd .k {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+th, td {
+  text-align: left;
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td {
+  font-weight: 500;
+}
+
+.rank {
+  font-weight: 700;
+  width: 32px;
+  color: var(--accent-light);
+}
+
+.note {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 16px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: var(--card);
+  padding: 6px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 0.3s ease;
+}
+
+.tab.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(58, 90, 64, 0.25);
+}
+
+@media (max-width: 480px) {
+  .row { grid-template-columns: 1fr; gap: 12px; }
+  .card { padding: 20px; }
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Karbon ayak izi hesaplayıcı</h1>
-  <p class="sub">Prototip &middot; formu doldur, tahmini yıllık CO₂ emisyonunu gör ve liderlik tablosuna katıl.</p>
+  <h1>Karbon Ayak İzi Hesaplayıcı</h1>
+  <p class="sub">Doğaya bıraktığın izi keşfet. Formu doldur, tahmini yıllık emisyonunu gör ve faturanı indir.</p>
 
   <div class="tabs">
     <div class="tab active" id="tabCalc" onclick="showTab('calc')">Hesapla</div>
-    <div class="tab" id="tabBoard" onclick="showTab('board')">Liderlik tablosu</div>
+    <div class="tab" id="tabBoard" onclick="showTab('board')">Liderlik Tablosu</div>
   </div>
 
   <div id="viewCalc">
     <div class="card">
       <h2>Bilgilerin</h2>
       
-      <div style="margin-bottom: 12px;">
+      <div style="margin-bottom: 16px;">
         <label>Ad (liderlik tablosunda görünür)</label>
         <input id="name" placeholder="Örn. Ayşe K.">
       </div>
       <div class="err" id="errBasic">Hesaplama yapabilmek için adınızı girmelisiniz.</div>
 
-      <div class="row" style="margin-top: 16px;">
+      <div class="row" style="margin-top: 20px;">
         <div><label>Aylık araba km</label><input id="carKm" type="number" min="0" value="300"></div>
         <div><label>Araç tipi</label>
           <select id="carType">
@@ -90,24 +359,30 @@ th{color:var(--muted);font-weight:500;font-size:12px;}
         </div>
       </div>
 
-      <button class="btn-primary" onclick="calculate()">Hesapla ve kaydet</button>
+      <button class="btn-primary" onclick="calculate()">Hesapla ve Kaydet</button>
 
       <div class="result" id="result">
-        <div class="num" id="totalCo2">0 kg</div>
-        <div class="lbl">yıllık tahmini CO₂ eşdeğeri</div>
-        <div class="breakdown">
-          <div class="bd"><div class="v" id="bdCar">0</div><div class="k">Ulaşım (kg)</div></div>
-          <div class="bd"><div class="v" id="bdFlight">0</div><div class="k">Uçuş (kg)</div></div>
-          <div class="bd"><div class="v" id="bdHome">0</div><div class="k">Ev enerjisi (kg)</div></div>
-          <div class="bd"><div class="v" id="bdDiet">0</div><div class="k">Beslenme (kg)</div></div>
+        <!-- Bu div (invoiceArea) indirme işlemi sırasında fotoğrafa dönüştürülecek -->
+        <div id="invoiceArea">
+          <div style="font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 12px;" id="invoiceName"></div>
+          <div class="num" id="totalCo2">0 kg</div>
+          <div class="lbl">yıllık tahmini CO₂ eşdeğeri</div>
+          <div class="breakdown">
+            <div class="bd"><div class="v" id="bdCar">0</div><div class="k">Ulaşım (kg)</div></div>
+            <div class="bd"><div class="v" id="bdFlight">0</div><div class="k">Uçuş (kg)</div></div>
+            <div class="bd"><div class="v" id="bdHome">0</div><div class="k">Ev Enerjisi (kg)</div></div>
+            <div class="bd"><div class="v" id="bdDiet">0</div><div class="k">Beslenme (kg)</div></div>
+          </div>
         </div>
+        
+        <button class="btn-secondary" id="downloadBtn" onclick="downloadInvoice()">Faturayı İndir (Görsel)</button>
       </div>
     </div>
   </div>
 
   <div id="viewBoard" style="display:none">
     <div class="card">
-      <h2>Liderlik tablosu <span style="font-weight:400;color:var(--muted);font-size:12px">(en düşük emisyon en üstte)</span></h2>
+      <h2>Liderlik Tablosu <span style="font-weight:400;color:var(--muted);font-size:13px;margin-left:auto;">(En Düşük Emisyon)</span></h2>
       <table>
         <thead><tr><th class="rank">#</th><th>Ad</th><th>kg CO₂/yıl</th></tr></thead>
         <tbody id="boardBody"></tbody>
@@ -116,20 +391,16 @@ th{color:var(--muted);font-weight:500;font-size:12px;}
     </div>
   </div>
 
-  <p class="note">Not: Emisyon katsayıları kabaca genel ortalamalardır (araç: DEFRA/EPA tipi km başı kg CO₂; uçuş: ~90 kg/saat; elektrik: ~0.4 kg/kWh; doğalgaz: ~2 kg/m³). Gerçek bir sistemde bölgesel katsayılar ve doğrulanmış kaynaklar kullanılmalıdır.</p>
 </div>
 
 <script>
 let db = null;
 let mcp = null;
+let currentUserName = "";
 
 async function init(){
-  try{
-    db = await claude.use("db");
-  }catch(e){ db = null; }
-  try{
-    mcp = await claude.use("mcp");
-  }catch(e){ mcp = null; }
+  try{ db = await claude.use("db"); }catch(e){ db = null; }
+  try{ mcp = await claude.use("mcp"); }catch(e){ mcp = null; }
   loadBoard();
 }
 init();
@@ -137,21 +408,25 @@ init();
 function showTab(t){
   document.getElementById('tabCalc').classList.toggle('active', t==='calc');
   document.getElementById('tabBoard').classList.toggle('active', t==='board');
+  
   document.getElementById('viewCalc').style.display = t==='calc' ? '' : 'none';
   document.getElementById('viewBoard').style.display = t==='board' ? '' : 'none';
+  
   if(t==='board') loadBoard();
 }
 
 function calculate(){
   const name = document.getElementById('name').value.trim();
   const errEl = document.getElementById('errBasic');
+  const resultEl = document.getElementById('result');
   
-  // Sadece ismin girilip girilmediğini kontrol ediyoruz
   if(!name){
     errEl.style.display = 'block';
+    resultEl.classList.remove('show');
     return;
   }
   errEl.style.display = 'none';
+  currentUserName = name;
 
   const carKm = parseFloat(document.getElementById('carKm').value) || 0;
   const carFactor = parseFloat(document.getElementById('carType').value) || 0;
@@ -167,12 +442,16 @@ function calculate(){
 
   const total = Math.round(carAnnual + flightAnnual + homeAnnual + dietTotal);
 
+  document.getElementById('invoiceName').textContent = name + " - Karbon Ayak İzi Faturası";
   document.getElementById('totalCo2').textContent = total.toLocaleString('tr-TR') + ' kg';
   document.getElementById('bdCar').textContent = Math.round(carAnnual).toLocaleString('tr-TR');
   document.getElementById('bdFlight').textContent = Math.round(flightAnnual).toLocaleString('tr-TR');
   document.getElementById('bdHome').textContent = Math.round(homeAnnual).toLocaleString('tr-TR');
   document.getElementById('bdDiet').textContent = Math.round(dietTotal).toLocaleString('tr-TR');
-  document.getElementById('result').style.display = 'block';
+  
+  resultEl.classList.remove('show');
+  void resultEl.offsetWidth; 
+  resultEl.classList.add('show');
   
   const currentResult = {
     name, 
@@ -183,15 +462,50 @@ function calculate(){
   saveToLeaderboard(currentResult);
 }
 
+// Görsel İndirme Fonksiyonu
+function downloadInvoice(){
+  const invoiceElement = document.getElementById('invoiceArea');
+  const btn = document.getElementById('downloadBtn');
+  const originalText = btn.textContent;
+  
+  btn.textContent = "İndiriliyor...";
+  btn.disabled = true;
+
+  html2canvas(invoiceElement, {
+    scale: 2, // Çözünürlüğü artırmak için
+    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--card').trim() // Temaya uygun arkaplan
+  }).then(canvas => {
+    // Canvas'ı bir resim dosyasına dönüştür
+    const imgData = canvas.toDataURL('image/png');
+    
+    // Geçici bir indirme linki oluştur
+    const link = document.createElement('a');
+    link.href = imgData;
+    // Dosya ismine kullanıcının adını ekle
+    const safeName = currentUserName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    link.download = `karbon_faturasi_${safeName}.png`;
+    
+    // İndirmeyi tetikle
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }).catch(err => {
+    btn.textContent = "İndirme Başarısız";
+    btn.disabled = false;
+  });
+}
+
 async function saveToLeaderboard(r){
   if(!db) return;
   try{
-    // E-posta olmadığı için benzersiz bir kayıt ID'si oluşturmak için zamanı kullanıyoruz
     const id = 'entry_' + Date.now();
     await db.doc('leaderboard/' + id).set({
       name: r.name, total: r.total, date: r.date
     });
-  }catch(e){ /* prototipte yazma hatalarını yoksay */ }
+  }catch(e){ }
 }
 
 async function loadBoard(){
