@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Karbon Ayak İzi Hesaplayıcı</title>
+<style>
+:root{
+  --bg:#f4f7f5; --card:#ffffff; --border:#dfe6e2; --text:#1c2b23; --muted:#5c6b63;
+  --accent:#1f7a52; --accent-dark:#155a3c; --danger:#c1443a; --amber:#b8860b;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#101512; --card:#182019; --border:#2b352e; --text:#e7ece9; --muted:#9fada4; --accent:#3fae7f; --accent-dark:#2c8863; }
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+.wrap{max-width:760px;margin:0 auto;padding:28px 16px 60px;}
+h1{font-size:22px;font-weight:600;margin:0 0 4px;}
+.sub{color:var(--muted);font-size:14px;margin:0 0 24px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:18px;}
+.card h2{font-size:16px;margin:0 0 14px;font-weight:600;}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px;}
+input,select{width:100%;height:38px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);padding:0 10px;font-size:14px;}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+button{cursor:pointer;border:none;border-radius:8px;font-size:14px;font-weight:600;padding:10px 16px;}
+.btn-primary{background:var(--accent);color:#fff;width:100%;margin-top:6px;}
+.btn-primary:hover{background:var(--accent-dark);}
+.err{color:var(--danger);font-size:12px;margin-top:4px;display:none;}
+.result{display:none;text-align:center;padding:18px 0 4px;}
+.result .num{font-size:38px;font-weight:700;color:var(--accent);}
+.result .lbl{color:var(--muted);font-size:13px;margin-top:2px;}
+.breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px;}
+.bd{background:var(--bg);border-radius:8px;padding:8px;text-align:center;}
+.bd .v{font-weight:600;font-size:14px;}
+.bd .k{font-size:11px;color:var(--muted);margin-top:2px;}
+table{width:100%;border-collapse:collapse;font-size:14px;}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border);}
+th{color:var(--muted);font-weight:500;font-size:12px;}
+.rank{font-weight:600;width:28px;}
+.note{font-size:12px;color:var(--muted);margin-top:10px;}
+.tabs{display:flex;gap:6px;margin-bottom:16px;}
+.tab{flex:1;text-align:center;padding:8px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:500;}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Karbon ayak izi hesaplayıcı</h1>
+  <p class="sub">Prototip &middot; formu doldur, tahmini yıllık CO₂ emisyonunu gör ve liderlik tablosuna katıl.</p>
+
+  <div class="tabs">
+    <div class="tab active" id="tabCalc" onclick="showTab('calc')">Hesapla</div>
+    <div class="tab" id="tabBoard" onclick="showTab('board')">Liderlik tablosu</div>
+  </div>
+
+  <div id="viewCalc">
+    <div class="card">
+      <h2>Bilgilerin</h2>
+      
+      <div style="margin-bottom: 12px;">
+        <label>Ad (liderlik tablosunda görünür)</label>
+        <input id="name" placeholder="Örn. Ayşe K.">
+      </div>
+      <div class="err" id="errBasic">Hesaplama yapabilmek için adınızı girmelisiniz.</div>
+
+      <div class="row" style="margin-top: 16px;">
+        <div><label>Aylık araba km</label><input id="carKm" type="number" min="0" value="300"></div>
+        <div><label>Araç tipi</label>
+          <select id="carType">
+            <option value="0.192">Benzinli</option>
+            <option value="0.171">Dizel</option>
+            <option value="0.053">Elektrikli</option>
+            <option value="0">Aracım yok</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div><label>Yıllık uçuş saati</label><input id="flightHrs" type="number" min="0" value="5"></div>
+        <div><label>Aylık elektrik (kWh)</label><input id="electricity" type="number" min="0" value="250"></div>
+      </div>
+      <div class="row">
+        <div><label>Aylık doğalgaz (m³)</label><input id="gas" type="number" min="0" value="60"></div>
+        <div><label>Beslenme tipi</label>
+          <select id="diet">
+            <option value="2500">Yüksek et tüketimi</option>
+            <option value="1700" selected>Ortalama (karışık)</option>
+            <option value="1100">Vejetaryen</option>
+            <option value="800">Vegan</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="calculate()">Hesapla ve kaydet</button>
+
+      <div class="result" id="result">
+        <div class="num" id="totalCo2">0 kg</div>
+        <div class="lbl">yıllık tahmini CO₂ eşdeğeri</div>
+        <div class="breakdown">
+          <div class="bd"><div class="v" id="bdCar">0</div><div class="k">Ulaşım (kg)</div></div>
+          <div class="bd"><div class="v" id="bdFlight">0</div><div class="k">Uçuş (kg)</div></div>
+          <div class="bd"><div class="v" id="bdHome">0</div><div class="k">Ev enerjisi (kg)</div></div>
+          <div class="bd"><div class="v" id="bdDiet">0</div><div class="k">Beslenme (kg)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewBoard" style="display:none">
+    <div class="card">
+      <h2>Liderlik tablosu <span style="font-weight:400;color:var(--muted);font-size:12px">(en düşük emisyon en üstte)</span></h2>
+      <table>
+        <thead><tr><th class="rank">#</th><th>Ad</th><th>kg CO₂/yıl</th></tr></thead>
+        <tbody id="boardBody"></tbody>
+      </table>
+      <div class="note" id="boardEmpty" style="display:none">Henüz kimse hesaplama yapmadı. İlk sen ol.</div>
+    </div>
+  </div>
+
+  <p class="note">Not: Emisyon katsayıları kabaca genel ortalamalardır (araç: DEFRA/EPA tipi km başı kg CO₂; uçuş: ~90 kg/saat; elektrik: ~0.4 kg/kWh; doğalgaz: ~2 kg/m³). Gerçek bir sistemde bölgesel katsayılar ve doğrulanmış kaynaklar kullanılmalıdır.</p>
+</div>
+
+<script>
+let db = null;
+let mcp = null;
+
+async function init(){
+  try{
+    db = await claude.use("db");
+  }catch(e){ db = null; }
+  try{
+    mcp = await claude.use("mcp");
+  }catch(e){ mcp = null; }
+  loadBoard();
+}
+init();
+
+function showTab(t){
+  document.getElementById('tabCalc').classList.toggle('active', t==='calc');
+  document.getElementById('tabBoard').classList.toggle('active', t==='board');
+  document.getElementById('viewCalc').style.display = t==='calc' ? '' : 'none';
+  document.getElementById('viewBoard').style.display = t==='board' ? '' : 'none';
+  if(t==='board') loadBoard();
+}
+
+function calculate(){
+  const name = document.getElementById('name').value.trim();
+  const errEl = document.getElementById('errBasic');
+  
+  // Sadece ismin girilip girilmediğini kontrol ediyoruz
+  if(!name){
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  const carKm = parseFloat(document.getElementById('carKm').value) || 0;
+  const carFactor = parseFloat(document.getElementById('carType').value) || 0;
+  const flightHrs = parseFloat(document.getElementById('flightHrs').value) || 0;
+  const electricity = parseFloat(document.getElementById('electricity').value) || 0;
+  const gas = parseFloat(document.getElementById('gas').value) || 0;
+  const dietAnnual = parseFloat(document.getElementById('diet').value) || 0;
+
+  const carAnnual = carKm * 12 * carFactor;
+  const flightAnnual = flightHrs * 90;
+  const homeAnnual = (electricity * 12 * 0.4) + (gas * 12 * 2);
+  const dietTotal = dietAnnual;
+
+  const total = Math.round(carAnnual + flightAnnual + homeAnnual + dietTotal);
+
+  document.getElementById('totalCo2').textContent = total.toLocaleString('tr-TR') + ' kg';
+  document.getElementById('bdCar').textContent = Math.round(carAnnual).toLocaleString('tr-TR');
+  document.getElementById('bdFlight').textContent = Math.round(flightAnnual).toLocaleString('tr-TR');
+  document.getElementById('bdHome').textContent = Math.round(homeAnnual).toLocaleString('tr-TR');
+  document.getElementById('bdDiet').textContent = Math.round(dietTotal).toLocaleString('tr-TR');
+  document.getElementById('result').style.display = 'block';
+  
+  const currentResult = {
+    name, 
+    total, 
+    date: new Date().toISOString()
+  };
+
+  saveToLeaderboard(currentResult);
+}
+
+async function saveToLeaderboard(r){
+  if(!db) return;
+  try{
+    // E-posta olmadığı için benzersiz bir kayıt ID'si oluşturmak için zamanı kullanıyoruz
+    const id = 'entry_' + Date.now();
+    await db.doc('leaderboard/' + id).set({
+      name: r.name, total: r.total, date: r.date
+    });
+  }catch(e){ /* prototipte yazma hatalarını yoksay */ }
+}
+
+async function loadBoard(){
+  const body = document.getElementById('boardBody');
+  const empty = document.getElementById('boardEmpty');
+  if(!db){
+    empty.style.display = 'block';
+    empty.textContent = 'Liderlik tablosu bu görünümde kullanılamıyor.';
+    body.innerHTML = '';
+    return;
+  }
+  try{
+    const snap = await db.collection('leaderboard').orderBy('total','asc').limit(20).get();
+    const docs = snap.docs || [];
+    if(docs.length === 0){
+      empty.style.display = 'block';
+      body.innerHTML = '';
+      return;
+    }
+    empty.style.display = 'none';
+    body.innerHTML = docs.map((d,i) => {
+      const data = d.data();
+      return '<tr><td class="rank">'+(i+1)+'</td><td>'+escapeHtml(data.name||'—')+'</td><td>'+Number(data.total||0).toLocaleString('tr-TR')+'</td></tr>';
+    }).join('');
+  }catch(e){
+    empty.style.display = 'block';
+    empty.textContent = 'Liderlik tablosu yüklenemedi.';
+    body.innerHTML = '';
+  }
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
