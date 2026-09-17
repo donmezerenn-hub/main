@@ -89,10 +89,13 @@ h1 {
 }
 
 .row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 16px;
   margin-bottom: 16px;
+}
+
+.row > div {
+  flex: 1;
 }
 
 label {
@@ -193,7 +196,7 @@ button {
 /* Fatura İndirme Alanı İçin Özel Konteyner */
 #invoiceArea {
   background: var(--card);
-  padding: 16px;
+  padding: 20px 16px;
   border-radius: 16px;
 }
 
@@ -211,9 +214,11 @@ button {
   font-weight: 500;
 }
 
+/* Grid yerine flexbox kullanarak html2canvas hatalarını önlüyoruz */
 .breakdown {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 12px;
   margin-top: 24px;
 }
@@ -224,6 +229,7 @@ button {
   padding: 16px 12px;
   text-align: center;
   border: 1px solid var(--border);
+  width: calc(50% - 6px); /* 2 sütun düzeni */
 }
 
 .bd .v {
@@ -307,7 +313,7 @@ td {
 }
 
 @media (max-width: 480px) {
-  .row { grid-template-columns: 1fr; gap: 12px; }
+  .row { flex-direction: column; gap: 12px; }
   .card { padding: 20px; }
 }
 </style>
@@ -364,7 +370,7 @@ td {
       <div class="result" id="result">
         <!-- Bu div (invoiceArea) indirme işlemi sırasında fotoğrafa dönüştürülecek -->
         <div id="invoiceArea">
-          <div style="font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 12px;" id="invoiceName"></div>
+          <div style="font-size: 15px; font-weight: 600; color: var(--accent); margin-bottom: 16px; border-bottom: 1px dashed var(--border); padding-bottom: 8px;" id="invoiceName"></div>
           <div class="num" id="totalCo2">0 kg</div>
           <div class="lbl">yıllık tahmini CO₂ eşdeğeri</div>
           <div class="breakdown">
@@ -462,7 +468,7 @@ function calculate(){
   saveToLeaderboard(currentResult);
 }
 
-// Görsel İndirme Fonksiyonu
+// Geliştirilmiş Görsel İndirme Fonksiyonu
 function downloadInvoice(){
   const invoiceElement = document.getElementById('invoiceArea');
   const btn = document.getElementById('downloadBtn');
@@ -471,21 +477,24 @@ function downloadInvoice(){
   btn.textContent = "İndiriliyor...";
   btn.disabled = true;
 
+  // Sistemin karanlık veya aydınlık modda olmasına göre arkaplanı belirle
+  const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const bgColor = isDarkMode ? "#242a26" : "#ffffff";
+
+  // Kütüphaneye html alanını boyama talimatı ver
   html2canvas(invoiceElement, {
-    scale: 2, // Çözünürlüğü artırmak için
-    backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--card').trim() // Temaya uygun arkaplan
+    scale: 2, 
+    backgroundColor: bgColor,
+    useCORS: true,
+    scrollY: -window.scrollY // Sayfa aşağı kaydırıldığında oluşan boşluk hatasını önler
   }).then(canvas => {
-    // Canvas'ı bir resim dosyasına dönüştür
     const imgData = canvas.toDataURL('image/png');
     
-    // Geçici bir indirme linki oluştur
     const link = document.createElement('a');
     link.href = imgData;
-    // Dosya ismine kullanıcının adını ekle
-    const safeName = currentUserName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const safeName = currentUserName ? currentUserName.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'fatura';
     link.download = `karbon_faturasi_${safeName}.png`;
     
-    // İndirmeyi tetikle
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -493,6 +502,7 @@ function downloadInvoice(){
     btn.textContent = originalText;
     btn.disabled = false;
   }).catch(err => {
+    console.error("Görsel oluşturma hatası:", err);
     btn.textContent = "İndirme Başarısız";
     btn.disabled = false;
   });
